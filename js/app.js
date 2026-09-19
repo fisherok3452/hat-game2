@@ -1,7 +1,7 @@
-import {t,getLang,setLang} from "./i18n.js?v=12-player";
-import {categories,categoryNames,teamNames} from "./data.js?v=12-player";
-import {recommendedWords,buildTurnOrder,pickCard,markGuess,uniqueGuessed,allCardsExhausted} from "./game.js?v=12-player";
-import {save,load,clear} from "./storage.js?v=12-player";
+import {t,getLang,setLang} from "./i18n.js?v=12-player-1";
+import {categories,categoryNames,teamNames} from "./data.js?v=12-player-1";
+import {recommendedWords,buildTurnOrder,pickCard,markGuess,uniqueGuessed,allCardsExhausted} from "./game.js?v=12-player-1";
+import {save,load,clear} from "./storage.js?v=12-player-1";
 
 const app=document.querySelector("#app");
 const $=(selector)=>document.querySelector(selector);
