@@ -1,25 +1,12 @@
-export function recommendedWords(activePlayers, turns){
-  return Math.max(16, activePlayers * (8 + Math.max(0,turns-1)*4));
+export function recommendedWords(activeClueGivers,turns=1){
+  return Math.max(4,activeClueGivers*12);
 }
-export function buildTurnOrder(teams, turns, startTeam=0){
-  const order=[]; const max=Math.max(...teams.map(t=>t.players.filter(p=>!p.guessOnly).length));
-  for(let cycle=0;cycle<turns;cycle++){
-    for(let r=0;r<max;r++){
-      for(let offset=0;offset<teams.length;offset++){
-        const ti=(startTeam+offset)%teams.length;
-        const active=teams[ti].players.filter(p=>!p.guessOnly);
-        if(active[r]) order.push({teamIndex:ti, playerId:active[r].id, playerName:active[r].name, personalTurn:cycle+1});
-      }
-    }
-  }
-  return order;
-}
-export function eligibleCards(state,teamIndex,playerId=null){
+export function eligibleCards(state,teamIndex,blockedAuthorIds=[]){
   const round=state.round;
-  return state.roundPool.filter(card=>(state.guesses[round]?.[card.id]||[]).length===0 && card.authorId!==playerId);
+  return state.roundPool.filter(card=>(state.guesses[round]?.[card.id]||[]).length===0 && !blockedAuthorIds.includes(card.authorId));
 }
-export function pickCard(state,teamIndex,excluded=[],playerId=null){
-  const cards=eligibleCards(state,teamIndex,playerId).filter(c=>!excluded.includes(c.id));
+export function pickCard(state,teamIndex,excluded=[],blockedAuthorIds=[]){
+  const cards=eligibleCards(state,teamIndex,blockedAuthorIds).filter(c=>!excluded.includes(c.id));
   if(!cards.length) return null;
   return cards[Math.floor(Math.random()*cards.length)];
 }
