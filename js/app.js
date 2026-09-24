@@ -1,15 +1,16 @@
-import {t,getLang,setLang} from "./i18n.js?v=12-player-1";
-import {categories,categoryNames,teamNames} from "./data.js?v=12-player-1";
-import {recommendedWords,buildTurnOrder,pickCard,markGuess,uniqueGuessed,allCardsExhausted} from "./game.js?v=12-player-1";
-import {save,load,clear} from "./storage.js?v=12-player-1";
+import {t,getLang,setLang} from "./i18n.js?v=13-player";
+import {categories,categoryNames,teamNames} from "./data.js?v=13-player";
+import {recommendedWords,buildTurnOrder,pickCard,markGuess,uniqueGuessed,allCardsExhausted} from "./game.js?v=13-player";
+import {save,load,clear} from "./storage.js?v=13-player";
 
 const app=document.querySelector("#app");
 const $=(selector)=>document.querySelector(selector);
 const $$=(selector)=>[...document.querySelectorAll(selector)];
 let S=load()||fresh();
+S.turns=1;if(![45,60,90].includes(S.turnSeconds))S.turnSeconds=60;
 let timer=null;
 
-function fresh(){return {screen:"home",playersCount:4,teamCount:2,teams:[],turnSeconds:45,turns:2,wordsCount:48,wordsManual:false,round:1,roundPool:[],guesses:{1:{},2:{},3:{}},turnOrder:[],turnIndex:0,currentCard:null,turnCorrect:0,turnSkipped:0,skippedThisTurn:[],turnGuessedIds:[],gameWords:[],lastChance:false,tiebreak:null,wordEntryOrder:[],wordEntryIndex:0,playerWords:{}}}
+function fresh(){return {screen:"home",playersCount:4,teamCount:2,teams:[],turnSeconds:60,turns:1,wordsCount:48,wordsManual:false,round:1,roundPool:[],guesses:{1:{},2:{},3:{}},turnOrder:[],turnIndex:0,currentCard:null,turnCorrect:0,turnSkipped:0,skippedThisTurn:[],turnGuessedIds:[],gameWords:[],lastChance:false,tiebreak:null,wordEntryOrder:[],wordEntryIndex:0,playerWords:{}}}
 function persist(){save(S)}
 function shell(body,back=false){
   app.innerHTML=`<main class="shell"><div class="topbar"><button class="brand home-link" id="brandHome" type="button">\u{1F3A9} ${t("app")}</button><div>${back?`<button class="icon-btn" id="back" type="button">\u2190</button>`:""}<button class="icon-btn" id="settings" type="button">\u2699\uFE0F</button></div></div>${body}</main>`;
@@ -58,7 +59,7 @@ function settings(){
  $("#back").onclick=returnFromSettings;
 }
 function players(){
- shell(`<h1>${t("playersQ")}</h1><p class="muted">${t("minPlayers")}</p><div class="number"><button id="minus">\u2212</button><strong>${S.playersCount}</strong><button id="plus">+</button></div><button class="btn primary" id="next">${t("next")}</button>`,true);
+ shell(`<h1>${t("playersQ")}</h1><p class="muted">${t("minPlayers")}</p><div class="number"><button id="minus">\u2212</button><strong>${S.playersCount}</strong><button id="plus">+</button></div><p class="muted center">${t("oneTurnNote")}</p><button class="btn primary" id="next">${t("next")}</button>`,true);
  $("#minus").onclick=()=>{S.playersCount=Math.max(4,S.playersCount-1);render()};$("#plus").onclick=()=>{S.playersCount=Math.min(20,S.playersCount+1);render()};$("#next").onclick=()=>go("teams");
 }
 function teamOptions(n){let out=[];for(let k=2;k<=Math.floor(n/2);k++){const base=Math.floor(n/k),rem=n%k;if(base>=2)out.push({k,sizes:Array.from({length:k},(_,i)=>base+(i<rem?1:0))})}return out}
@@ -83,9 +84,9 @@ function allPlayers(){return S.teams.flatMap((team,teamIndex)=>team.players.map(
 function wordsPerPlayer(){const n=allPlayers().length||1;return {base:Math.floor(S.wordsCount/n),extra:S.wordsCount%n}}
 function playerWordTarget(index){const q=wordsPerPlayer();return q.base+(index<q.extra?1:0)}
 function gameSettings(){
- const rec=recommendedWords(activeCount(),S.turns);if(!S.wordsManual)S.wordsCount=rec;const n=allPlayers().length||1,q=wordsPerPlayer(),distribution=q.extra?`${q.base}-${q.base+1}`:`${q.base}`;
- shell(`<h1>${t("gameSettings")}</h1><div class="card"><h3>${t("words")}</h3><div class="number"><button id="wm">\u2212</button><strong>${S.wordsCount}</strong><button id="wp">+</button></div><p class="muted center">${t("recommended")}: ${rec}</p><p class="center"><strong>${t("eachPlayerAdds")}: ${distribution}</strong></p>${q.extra?`<p class="small muted center">${q.extra} ${t("playersAddExtra")}</p>`:""}</div><div class="card"><h3>${t("turnTime")}</h3><div class="grid3">${[30,45,60].map(x=>`<button class="pill ${S.turnSeconds===x?"selected":""}" data-sec="${x}">${x}</button>`).join("")}</div></div><div class="card"><h3>${t("turns")}</h3><div class="grid3">${[1,2,3].map(x=>`<button class="pill ${S.turns===x?"selected":""}" data-turn="${x}">${x}</button>`).join("")}</div></div><button class="btn primary" id="next">${t("next")}</button>`,true);
- $("#wm").onclick=()=>{S.wordsManual=true;S.wordsCount=Math.max(n,S.wordsCount-4);render()};$("#wp").onclick=()=>{S.wordsManual=true;S.wordsCount+=4;render()};$$("[data-sec]").forEach(b=>b.onclick=()=>{S.turnSeconds=+b.dataset.sec;render()});$$("[data-turn]").forEach(b=>b.onclick=()=>{S.turns=+b.dataset.turn;render()});$("#next").onclick=prepareWordEntry;
+ const rec=recommendedWords(activeCount(),1);if(!S.wordsManual)S.wordsCount=rec;const n=allPlayers().length||1,q=wordsPerPlayer(),distribution=q.extra?`${q.base}-${q.base+1}`:`${q.base}`;
+ shell(`<h1>${t("gameSettings")}</h1><div class="card"><h3>${t("words")}</h3><div class="number"><button id="wm">\u2212</button><strong>${S.wordsCount}</strong><button id="wp">+</button></div><p class="muted center">${t("recommended")}: ${rec}</p><p class="center"><strong>${t("eachPlayerAdds")}: ${distribution}</strong></p>${q.extra?`<p class="small muted center">${q.extra} ${t("playersAddExtra")}</p>`:""}</div><div class="card"><h3>${t("turnTime")}</h3><div class="grid3">${[45,60,90].map(x=>`<button class="pill ${S.turnSeconds===x?"selected":""}" data-sec="${x}">${x}</button>`).join("")}</div></div><button class="btn primary" id="next">${t("next")}</button>`,true);
+ $("#wm").onclick=()=>{S.wordsManual=true;S.wordsCount=Math.max(n,S.wordsCount-4);render()};$("#wp").onclick=()=>{S.wordsManual=true;S.wordsCount+=4;render()};$$("[data-sec]").forEach(b=>b.onclick=()=>{S.turnSeconds=+b.dataset.sec;render()});$("#next").onclick=prepareWordEntry;
 }
 function prepareWordEntry(){S.wordEntryOrder=allPlayers().map((x,j)=>({...x,entryIndex:j}));S.wordEntryIndex=0;S.playerWords={};S.gameWords=[];go("wordPass")}
 function currentWordAuthor(){return S.wordEntryOrder[S.wordEntryIndex]}
@@ -97,14 +98,15 @@ function wordEntry(){
  const add=()=>{const input=$("#pw"),v=input.value.trim();if(!v||mine.length>=target)return;const norm=normalizedWord(v);if(S.gameWords.some(card=>normalizedWord(card.word)===norm)){alert(t("duplicateWord"));input.value="";input.focus();return}const card={id:`player-${x.player.id}-${Date.now()}-${mine.length}`,word:v,authorId:x.player.id,authorName:x.player.name,category:"custom",difficulty:"normal"};mine.push(v);S.playerWords[key]=mine;S.gameWords.push(card);persist();render()};
  $("#addWord").onclick=add;$("#pw").addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();add()}});$$("[data-own]").forEach(btn=>btn.onclick=()=>{const word=mine[+btn.dataset.own],norm=normalizedWord(word);S.gameWords=S.gameWords.filter(card=>!(card.authorId===x.player.id&&normalizedWord(card.word)===norm));mine.splice(+btn.dataset.own,1);S.playerWords[key]=mine;persist();render()});$("#doneWords").onclick=()=>{if(mine.length<target)return;S.wordEntryIndex++;S.wordEntryIndex>=S.wordEntryOrder.length?go("ready"):go("wordPass")};
 }
-function ready(){shell(`<div class="center"><h1>\u{1F3A9} ${t("ready")}</h1></div>${S.teams.map(x=>`<div class="card center"><div class="team-title">${x.emoji} ${x.name}</div><p>${x.players.map(p=>p.name+(p.guessOnly?` (${t("guessOnly")})`:"")).join(" \u00B7 ")}</p></div>`).join("")}<div class="card"><div class="summary"><span>${t("words")}</span><strong>${S.gameWords.length}</strong></div><div class="summary"><span>${t("turnTime")}</span><strong>${S.turnSeconds}s</strong></div><div class="summary"><span>${t("turns")}</span><strong>${S.turns}</strong></div></div><button class="btn primary" id="start">${t("startGame")}</button>`,true);$("#start").onclick=startGame}
-function startGame(){S.roundPool=[...S.gameWords];S.round=1;S.guesses={1:{},2:{},3:{}};S.teams.forEach(x=>{x.score=0;x.roundScore=0});S.screen="roundIntro";persist();render()}
+function ready(){shell(`<div class="center"><h1>\u{1F3A9} ${t("ready")}</h1></div>${S.teams.map(x=>`<div class="card center"><div class="team-title">${x.emoji} ${x.name}</div><p>${x.players.map(p=>p.name+(p.guessOnly?` (${t("guessOnly")})`:"")).join(" \u00B7 ")}</p></div>`).join("")}<div class="card"><div class="summary"><span>${t("words")}</span><strong>${S.gameWords.length}</strong></div><div class="summary"><span>${t("turnTime")}</span><strong>${S.turnSeconds}s</strong></div></div><button class="btn primary" id="start">${t("startGame")}</button>`,true);$("#start").onclick=startGame}
+function startGame(){S.turns=1;S.roundPool=[...S.gameWords];S.round=1;S.guesses={1:{},2:{},3:{}};S.teams.forEach(x=>{x.score=0;x.roundScore=0});S.screen="roundIntro";persist();render()}
 function roundIntro(){
  const title=S.round===1?t("r1"):S.round===2?t("r2"):t("r3"), rules=S.round===1?t("r1rules"):S.round===2?t("r2rules"):t("r3rules");
  shell(`<div class="center"><p>${t("round")} ${S.round}</p><h1>${title}</h1><div class="card"><p>${rules}</p><strong>${t("eachPoint")}</strong></div><p class="muted">${S.roundPool.length} ${t("words").toLowerCase()}</p></div><button class="btn primary" id="start">${t("startRound")} ${S.round}</button>`);
  $("#start").onclick=()=>{S.teams.forEach(x=>x.roundScore=0);S.turnOrder=buildTurnOrder(S.teams,S.turns,(S.round-1)%S.teams.length);S.turnIndex=0;go("preTurn")};
 }
 function currentTurn(){return S.turnOrder[S.turnIndex]}
+function guessingPlayerIds(turn){const team=S.teams[turn.teamIndex];return team.players.filter(p=>p.id!==turn.playerId).map(p=>p.id)}
 function preTurn(){
  if(allCardsExhausted(S))return endRound();
  if(S.turnIndex>=S.turnOrder.length)return endRound();
@@ -113,7 +115,7 @@ function preTurn(){
  $("#start").onclick=()=>beginTurn();
 }
 function beginTurn(){
- const x=currentTurn();S.turnCorrect=0;S.turnSkipped=0;S.skippedThisTurn=[];S.turnGuessedIds=[];S.lastChance=false;S.emptyEnded=false;S.timeLeft=S.turnSeconds;S.currentCard=pickCard(S,x.teamIndex,[],x.playerId);if(!S.currentCard){return emptyTurn()}S.screen="play";persist();render();
+ const x=currentTurn();S.turnCorrect=0;S.turnSkipped=0;S.skippedThisTurn=[];S.turnGuessedIds=[];S.lastChance=false;S.emptyEnded=false;S.timeLeft=S.turnSeconds;S.currentCard=pickCard(S,x.teamIndex,[],guessingPlayerIds(x));if(!S.currentCard){return emptyTurn()}S.screen="play";persist();render();
 }
 function play(){
  const x=currentTurn(),team=S.teams[x.teamIndex],lang=getLang(),c=S.currentCard;
@@ -127,7 +129,7 @@ function fmt(n){return `0:${String(Math.max(0,n)).padStart(2,"0")}`}
 function answer(ok){
  const x=currentTurn(),id=S.currentCard.id;$("#correct").disabled=true;$("#skip").disabled=true;
  if(ok){if(markGuess(S,id,x.teamIndex)){S.turnCorrect++;S.turnGuessedIds.push(id)}}else{S.turnSkipped++;S.skippedThisTurn.push(id)}
- S.currentCard=pickCard(S,x.teamIndex,S.skippedThisTurn,x.playerId);
+ S.currentCard=pickCard(S,x.teamIndex,S.skippedThisTurn,guessingPlayerIds(x));
  if(!S.currentCard){clearInterval(timer);return emptyTurn()}
  persist();setTimeout(render,180);
 }
@@ -189,7 +191,7 @@ function tiebreakPreTurn(){
 }
 function tbPick(excluded=[]){
  const tb=S.tiebreak,ti=tbTeamIndex(),used=tb.guesses[ti]||[];
- const p=tbPlayer(),cards=S.roundPool.filter(c=>!used.includes(c.id)&&!excluded.includes(c.id)&&c.authorId!==p.id);
+ const p=tbPlayer(),team=S.teams[ti],blocked=team.players.filter(x=>x.id!==p.id).map(x=>x.id),cards=S.roundPool.filter(c=>!used.includes(c.id)&&!excluded.includes(c.id)&&!blocked.includes(c.authorId));
  return cards.length?cards[Math.floor(Math.random()*cards.length)]:null;
 }
 function beginTiebreakTurn(){
